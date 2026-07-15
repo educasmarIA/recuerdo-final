@@ -258,6 +258,8 @@
       <div class="cta-hd" id="zonaHD">
         🔑 <strong>¿Ya tienes tu clave HD?</strong> Pégala aquí y desbloquea tu descarga sin marca de agua:
         <input type="text" id="clave" placeholder="XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX" autocomplete="off">
+        <p class="hint">⚠️ Cada clave se canjea UNA sola vez (1 compra = 1 entrada en HD).
+        Deja tu entrada perfecta — nombre, foto, fondo, dedicatoria — ANTES de desbloquear.</p>
         <button class="btn" id="desbloquear">Desbloquear HD</button>
         <div class="hd-msg" id="hdMsg" role="status"></div>
         <button class="btn" id="descargarHD" style="display:none">⬇️ Descargar en HD</button>
@@ -806,11 +808,12 @@ $('desbloquear').addEventListener('click', async () => {
     });
     const j = await r.json();
     if(j && j.success){
-      sessionStorage.setItem('hd_ok','1');
-      msg('✅ Clave válida. ¡Gracias por tu apoyo! Ya puedes descargar en HD.', 'ok');
+      msg('✅ Clave canjeada. Descarga tu entrada en HD ahora — no cierres esta página.', 'ok');
       $('descargarHD').style.display = 'block';
+      $('desbloquear').style.display = 'none';
+      $('clave').disabled = true;
     } else {
-      msg('Esa clave no es válida. Revisa el email de tu compra.', 'error');
+      msg('Esa clave no es válida o ya fue canjeada. Revisa el email de tu compra.', 'error');
     }
   } catch(e){
     msg('No se pudo comprobar la clave. Inténtalo de nuevo en unos segundos.', 'error');
@@ -826,12 +829,9 @@ $('descargarHD').addEventListener('click', () => {
   a.download = 'recuerdo-de-la-final-2026-HD.png';
   a.href = c.toDataURL('image/png');
   a.click();
+  $('descargarHD').style.display = 'none';
+  msg('🎟️ Entrada HD descargada. ¡Gracias por tu apoyo! ¿Quieres otra para regalar? Cada entrada necesita su propia clave.', 'ok');
 });
-
-if(sessionStorage.getItem('hd_ok') === '1'){
-  msg('✅ HD desbloqueado en esta sesión.', 'ok');
-  $('descargarHD').style.display = 'block';
-}
 
 /* ---------- modo estadio: Marcha Real en MP3 (dominio público, grabación US Navy Band
    alojada en este mismo repo — suena en todos los navegadores, iPhone incluido)
