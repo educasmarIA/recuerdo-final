@@ -197,8 +197,12 @@
       <select id="fondoSel">
         <option value="bandera">Bandera de España</option>
         <option value="campo">Campo de fútbol</option>
+        <option value="marea">Marea roja (la afición)</option>
+        <option value="noche">Noche de final</option>
         <option value="fiesta">Rojo fiesta</option>
+        <option value="foto">📷 Tu propia foto…</option>
       </select>
+      <input type="file" id="fondoFile" accept="image/*" hidden>
 
       <label>Sección · Fila · Asiento (opcional)</label>
       <div class="fila3">
@@ -279,7 +283,7 @@
    LICENSE_ENDPOINT → webhook n8n que valida la clave contra Gumroad
    URL_COMPRA_HD    → página del producto HD en Gumroad
 ==================================================== */
-const URL_WEB          = 'educastillobtc-ctrl.github.io/recuerdo-final';
+const URL_WEB          = 'educasmaria.github.io/recuerdo-final';
 const MARCA_AGUA       = '@educasmarIA';
 const RIVAL            = null;
 const MODO_CAMPEONES   = false;
@@ -307,7 +311,20 @@ $('lugar').addEventListener('change', e => {
   $('lugarOtro').style.display = e.target.value === 'otro' ? 'block' : 'none';
 });
 
-$('fondoSel').addEventListener('change', () => dibujar());
+let bgImg = null;
+
+$('fondoSel').addEventListener('change', e => {
+  if(e.target.value === 'foto' && !bgImg) $('fondoFile').click();
+  dibujar();
+});
+
+$('fondoFile').addEventListener('change', e => {
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  const img = new Image();
+  img.onload = () => { bgImg = img; dibujar(); };
+  img.src = URL.createObjectURL(f);
+});
 
 [['secSel','secOtro'],['filaSel','filaOtro'],['asiSel','asiOtro']].forEach(([sel, otro]) => {
   $(sel).addEventListener('change', e => {
@@ -461,10 +478,65 @@ function fondoCampo(){
   vineta();
 }
 
+function fondoMarea(){
+  const g = ctx.createLinearGradient(0,0,0,1920);
+  g.addColorStop(0,'#5c0810'); g.addColorStop(1,'#26040a');
+  ctx.fillStyle = g; ctx.fillRect(0,0,1080,1920);
+  // filas de afición (cabezas + camisetas rojas) arriba y abajo
+  let seed = 11;
+  const rnd = () => (seed = (seed*9301+49297)%233280) / 233280;
+  const fila = (y, escala) => {
+    for(let x = -20; x < 1100; x += 34*escala){
+      const dx = x + rnd()*14, dy = y + rnd()*10;
+      ctx.fillStyle = rnd() > .82 ? '#ffc400' : '#a01020';      // alguna camiseta amarilla
+      ctx.fillRect(dx-13*escala, dy+8*escala, 26*escala, 30*escala);
+      ctx.fillStyle = '#2a0d0d';
+      ctx.beginPath(); ctx.arc(dx, dy, 11*escala, 0, 7); ctx.fill();
+    }
+  };
+  for(let i = 0; i < 4; i++) fila(28 + i*36, 0.9);
+  for(let i = 0; i < 5; i++) fila(1742 + i*40, 1.05);
+  confeti(50);
+  vineta();
+}
+
+function fondoNoche(){
+  const g = ctx.createLinearGradient(0,0,0,1920);
+  g.addColorStop(0,'#0c1230'); g.addColorStop(1,'#04060f');
+  ctx.fillStyle = g; ctx.fillRect(0,0,1080,1920);
+  let seed = 7;
+  const rnd = () => (seed = (seed*9301+49297)%233280) / 233280;
+  for(let i = 0; i < 170; i++){
+    ctx.globalAlpha = .25 + rnd()*.65;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(rnd()*1080, rnd()*1920, .8 + rnd()*2, 0, 7); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  const luna = ctx.createRadialGradient(880,170,20,880,170,150);
+  luna.addColorStop(0,'rgba(243,233,200,.9)');
+  luna.addColorStop(.35,'rgba(243,233,200,.25)');
+  luna.addColorStop(1,'rgba(243,233,200,0)');
+  ctx.fillStyle = luna; ctx.beginPath(); ctx.arc(880,170,150,0,7); ctx.fill();
+  confeti(30);
+  vineta();
+}
+
+function fondoFoto(){
+  if(!bgImg){ fondoFiesta(); return; }
+  const s = Math.max(1080/bgImg.width, 1920/bgImg.height);
+  const w = bgImg.width*s, h = bgImg.height*s;
+  ctx.drawImage(bgImg, (1080-w)/2, (1920-h)/2, w, h);
+  ctx.fillStyle = 'rgba(12,2,4,.45)'; ctx.fillRect(0,0,1080,1920);
+  vineta();
+}
+
 function fondo(){
   const sel = $('fondoSel') ? $('fondoSel').value : 'bandera';
   if(sel === 'campo') fondoCampo();
+  else if(sel === 'marea') fondoMarea();
+  else if(sel === 'noche') fondoNoche();
   else if(sel === 'fiesta') fondoFiesta();
+  else if(sel === 'foto') fondoFoto();
   else fondoBandera();
 }
 
@@ -709,7 +781,7 @@ $('compartir').addEventListener('click', async () => {
   cv.toBlob(async blob => {
     const file = new File([blob],'mi-recuerdo-de-la-final-2026.png',{type:'image/png'});
     if(navigator.canShare && navigator.canShare({files:[file]})){
-      try{ await navigator.share({files:[file], title:'Mi recuerdo de la final', text:'🇪🇸 Mi entrada de la final, con mi porra dentro. Haz la tuya gratis en 10 segundos y pásala al grupo: el que acierte el resultado, cerveza pagada 🍺 → https://educastillobtc-ctrl.github.io/recuerdo-final/'});}catch(e){}
+      try{ await navigator.share({files:[file], title:'Mi recuerdo de la final', text:'🇪🇸 Mi entrada de la final, con mi porra dentro. Haz la tuya gratis en 10 segundos y pásala al grupo: el que acierte el resultado, cerveza pagada 🍺 → https://educasmaria.github.io/recuerdo-final/'});}catch(e){}
     } else {
       const a = document.createElement('a');
       a.download = file.name; a.href = cv.toDataURL('image/png'); a.click();
