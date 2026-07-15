@@ -219,12 +219,13 @@
     </section>
   </div>
 
-  <button class="btn-audio" id="btnAudio" aria-pressed="false">🔇 Ambiente de estadio</button>
+  <button class="btn-audio" id="btnAudio" aria-pressed="false">🎺 Modo estadio</button>
 
   <footer>
     Hecho con ❤️ (y nervios) en España por <a href="https://x.com/educasmarIA" rel="noopener">@educasmarIA</a> ·
     Página de aficionados, sin relación con ninguna organización oficial.<br>
-    Automatizaciones en español → <a href="https://educasmar.gumroad.com" rel="noopener">educasmar.gumroad.com</a>
+    Automatizaciones en español → <a href="https://educasmar.gumroad.com" rel="noopener">educasmar.gumroad.com</a><br>
+    Himno: Marcha Real, interpretación de la U.S. Navy Band (dominio público, vía Wikimedia Commons).
   </footer>
 </div>
 
@@ -607,85 +608,59 @@ if(sessionStorage.getItem('hd_ok') === '1'){
   $('descargarHD').style.display = 'block';
 }
 
-/* ---------- ambiente de estadio (sintetizado con Web Audio: sin archivos, sin copyright) ---------- */
-let actx = null, master = null, ambTimers = [], ambNodos = null, ambienteOn = false;
+/* ---------- modo estadio: Marcha Real (dominio público, grabación US Navy Band
+   alojada en este mismo repo) + murmullo de grada sintetizado debajo.
+   En navegadores sin soporte .ogg (iPhone) suena solo la grada. ---------- */
+let actx = null, master = null, ambNodos = null, ambienteOn = false, himno = null;
+const puedeOgg = document.createElement('audio').canPlayType('audio/ogg; codecs="vorbis"') !== '';
 
-function ruidoBlanco(){
-  const buf = actx.createBuffer(1, actx.sampleRate * 2, actx.sampleRate);
-  const d = buf.getChannelData(0);
-  for(let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  return buf;
-}
-
-function iniciarAmbiente(){
+function iniciarGrada(){
   actx = actx || new (window.AudioContext || window.webkitAudioContext)();
   actx.resume();
   master = actx.createGain();
   master.gain.setValueAtTime(0.0001, actx.currentTime);
-  master.gain.linearRampToValueAtTime(0.5, actx.currentTime + 1.5);
+  master.gain.linearRampToValueAtTime(puedeOgg ? 0.28 : 0.5, actx.currentTime + 2);
   master.connect(actx.destination);
 
-  // 1 · murmullo de grada: ruido filtrado con oleaje lento
-  const grada = actx.createBufferSource(); grada.buffer = ruidoBlanco(); grada.loop = true;
-  const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 620;
+  const buf = actx.createBuffer(1, actx.sampleRate * 2, actx.sampleRate);
+  const d = buf.getChannelData(0);
+  for(let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+
+  const grada = actx.createBufferSource(); grada.buffer = buf; grada.loop = true;
+  const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 580;
   const gGrada = actx.createGain(); gGrada.gain.value = 0.16;
-  const oleaje = actx.createOscillator(); oleaje.frequency.value = 0.09;
-  const gOleaje = actx.createGain(); gOleaje.gain.value = 0.05;
+  const oleaje = actx.createOscillator(); oleaje.frequency.value = 0.08;
+  const gOleaje = actx.createGain(); gOleaje.gain.value = 0.055;
   oleaje.connect(gOleaje); gOleaje.connect(gGrada.gain);
   grada.connect(lp); lp.connect(gGrada); gGrada.connect(master);
   grada.start(); oleaje.start();
   ambNodos = { grada, oleaje };
-
-  // 2 · palmas de estadio: ritmo ♩ ♩ ♩♩♩
-  const palma = t => {
-    const s = actx.createBufferSource(); s.buffer = ruidoBlanco();
-    const bp = actx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1900; bp.Q.value = 1.1;
-    const pg = actx.createGain();
-    pg.gain.setValueAtTime(0.42, t);
-    pg.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
-    s.connect(bp); bp.connect(pg); pg.connect(master);
-    s.start(t); s.stop(t + 0.12);
-  };
-  const patronPalmas = () => {
-    const t = actx.currentTime + 0.05, n = 0.42;
-    [0, n*2, n*4, n*5, n*6].forEach(k => palma(t + k));
-  };
-  patronPalmas();
-  ambTimers.push(setInterval(patronPalmas, 4600));
-
-  // 3 · fanfarria de trompeta (melodía original, nuestra)
-  const nota = (f, t, d) => {
-    const o = actx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f;
-    const fl = actx.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = 2100;
-    const og = actx.createGain();
-    og.gain.setValueAtTime(0.0001, t);
-    og.gain.exponentialRampToValueAtTime(0.15, t + 0.04);
-    og.gain.exponentialRampToValueAtTime(0.001, t + d);
-    o.connect(fl); fl.connect(og); og.connect(master);
-    o.start(t); o.stop(t + d + 0.05);
-  };
-  const fanfarria = () => {
-    const t = actx.currentTime + 0.1;
-    const C4 = 261.63, E4 = 329.63, G4 = 392.00, A4 = 440.00, C5 = 523.25;
-    nota(C4, t, 0.22); nota(E4, t+0.24, 0.22); nota(G4, t+0.48, 0.22);
-    nota(C5, t+0.72, 0.5); nota(A4, t+1.28, 0.18); nota(C5, t+1.5, 0.75);
-  };
-  ambTimers.push(setTimeout(fanfarria, 1500));
-  ambTimers.push(setInterval(fanfarria, 23000));
 }
 
-function pararAmbiente(){
-  ambTimers.forEach(x => { clearInterval(x); clearTimeout(x); });
-  ambTimers = [];
+function pararGrada(){
   if(master) master.gain.linearRampToValueAtTime(0.0001, actx.currentTime + 0.5);
   setTimeout(() => { try{ ambNodos.grada.stop(); ambNodos.oleaje.stop(); }catch(e){} }, 600);
 }
 
 $('btnAudio').addEventListener('click', () => {
   ambienteOn = !ambienteOn;
-  $('btnAudio').textContent = ambienteOn ? '🔊 Ambiente: sonando' : '🔇 Ambiente de estadio';
   $('btnAudio').setAttribute('aria-pressed', String(ambienteOn));
-  ambienteOn ? iniciarAmbiente() : pararAmbiente();
+  if(ambienteOn){
+    iniciarGrada();
+    if(puedeOgg){
+      himno = himno || new Audio('himno.ogg');
+      himno.loop = true;
+      himno.volume = 0.7;
+      himno.play().catch(()=>{});
+      $('btnAudio').textContent = '🔊 Sonando: Marcha Real';
+    } else {
+      $('btnAudio').textContent = '🔊 Ambiente de estadio';
+    }
+  } else {
+    if(himno) himno.pause();
+    pararGrada();
+    $('btnAudio').textContent = '🎺 Modo estadio';
+  }
 });
 
 document.fonts.ready.then(dibujar);
