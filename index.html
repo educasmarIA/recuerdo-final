@@ -608,18 +608,17 @@ if(sessionStorage.getItem('hd_ok') === '1'){
   $('descargarHD').style.display = 'block';
 }
 
-/* ---------- modo estadio: Marcha Real (dominio público, grabación US Navy Band
-   alojada en este mismo repo) + murmullo de grada sintetizado debajo.
-   En navegadores sin soporte .ogg (iPhone) suena solo la grada. ---------- */
+/* ---------- modo estadio: Marcha Real en MP3 (dominio público, grabación US Navy Band
+   alojada en este mismo repo — suena en todos los navegadores, iPhone incluido)
+   + murmullo de grada sintetizado debajo. ---------- */
 let actx = null, master = null, ambNodos = null, ambienteOn = false, himno = null;
-const puedeOgg = document.createElement('audio').canPlayType('audio/ogg; codecs="vorbis"') !== '';
 
 function iniciarGrada(){
   actx = actx || new (window.AudioContext || window.webkitAudioContext)();
   actx.resume();
   master = actx.createGain();
   master.gain.setValueAtTime(0.0001, actx.currentTime);
-  master.gain.linearRampToValueAtTime(puedeOgg ? 0.28 : 0.5, actx.currentTime + 2);
+  master.gain.linearRampToValueAtTime(0.28, actx.currentTime + 2);
   master.connect(actx.destination);
 
   const buf = actx.createBuffer(1, actx.sampleRate * 2, actx.sampleRate);
@@ -647,15 +646,11 @@ $('btnAudio').addEventListener('click', () => {
   $('btnAudio').setAttribute('aria-pressed', String(ambienteOn));
   if(ambienteOn){
     iniciarGrada();
-    if(puedeOgg){
-      himno = himno || new Audio('himno.ogg');
-      himno.loop = true;
-      himno.volume = 0.7;
-      himno.play().catch(()=>{});
-      $('btnAudio').textContent = '🔊 Sonando: Marcha Real';
-    } else {
-      $('btnAudio').textContent = '🔊 Ambiente de estadio';
-    }
+    himno = himno || new Audio('himno.mp3');
+    himno.loop = true;
+    himno.volume = 0.7;
+    himno.play().catch(()=>{});
+    $('btnAudio').textContent = '🔊 Sonando: Marcha Real';
   } else {
     if(himno) himno.pause();
     pararGrada();
