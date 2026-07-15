@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tu Recuerdo de la Final · España 2026</title>
-<meta name="description" content="Genera gratis tu entrada conmemorativa personalizada de la gran final del 19 de julio de 2026. España está en la final. Tú estuviste ahí.">
+<meta name="description" content="Hazte gratis tu entrada de la gran final del 19 de julio — con tu nombre, tu foto y tu sitio — en 10 segundos. Sin registro. Y mándala al grupo.">
 <meta property="og:title" content="Tu Recuerdo de la Final · España 2026">
-<meta property="og:description" content="Genera gratis tu entrada conmemorativa de la gran final. Con tu nombre y desde donde la viviste.">
+<meta property="og:description" content="Tu entrada de la final con tu nombre y tu foto, gratis en 10 segundos. Mándala al grupo antes de que la mande otro.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;600;700&display=swap" rel="stylesheet">
@@ -107,37 +107,43 @@
 </style>
 </head>
 <body>
-<svg id="estadio" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+<svg id="estadio" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
   <defs>
-    <pattern id="publico" width="26" height="18" patternUnits="userSpaceOnUse">
-      <circle cx="6" cy="9" r="5" fill="rgba(255,220,180,.10)"/>
-      <circle cx="19" cy="4" r="4.5" fill="rgba(255,220,180,.06)"/>
-    </pattern>
-    <linearGradient id="foco" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="rgba(255,214,80,.20)"/>
-      <stop offset="1" stop-color="rgba(255,214,80,0)"/>
+    <filter id="ondear" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.011 0.019" numOctaves="2" seed="7" result="ruido"/>
+      <feDisplacementMap in="SourceGraphic" in2="ruido" scale="70" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <linearGradient id="pliegues" x1="0" y1="0" x2="1" y2="0.15">
+      <stop offset="0" stop-color="rgba(0,0,0,.34)"/>
+      <stop offset=".12" stop-color="rgba(255,255,255,.07)"/>
+      <stop offset=".25" stop-color="rgba(0,0,0,.30)"/>
+      <stop offset=".38" stop-color="rgba(255,255,255,.06)"/>
+      <stop offset=".52" stop-color="rgba(0,0,0,.36)"/>
+      <stop offset=".66" stop-color="rgba(255,255,255,.08)"/>
+      <stop offset=".80" stop-color="rgba(0,0,0,.32)"/>
+      <stop offset="1" stop-color="rgba(0,0,0,.42)"/>
     </linearGradient>
+    <radialGradient id="vineta" cx="0.5" cy="0.35" r="0.9">
+      <stop offset="0" stop-color="rgba(20,2,4,.30)"/>
+      <stop offset=".7" stop-color="rgba(20,2,4,.55)"/>
+      <stop offset="1" stop-color="rgba(15,1,3,.78)"/>
+    </radialGradient>
   </defs>
-  <polygon points="150,-30 330,-30 820,900 420,900" fill="url(#foco)"/>
-  <polygon points="1110,-30 1290,-30 1020,900 620,900" fill="url(#foco)"/>
-  <path d="M0,690 Q360,630 720,678 T1440,668 L1440,900 L0,900 Z" fill="#42070e"/>
-  <path d="M0,690 Q360,630 720,678 T1440,668 L1440,900 L0,900 Z" fill="url(#publico)"/>
-  <g opacity=".85">
-    <g transform="translate(180,676) rotate(-8)"><rect width="46" height="8" fill="#c60b1e"/><rect y="8" width="46" height="14" fill="#ffc400"/><rect y="22" width="46" height="8" fill="#c60b1e"/></g>
-    <g transform="translate(520,660) rotate(5)"><rect width="40" height="7" fill="#c60b1e"/><rect y="7" width="40" height="12" fill="#ffc400"/><rect y="19" width="40" height="7" fill="#c60b1e"/></g>
-    <g transform="translate(890,672) rotate(-4)"><rect width="52" height="9" fill="#c60b1e"/><rect y="9" width="52" height="15" fill="#ffc400"/><rect y="24" width="52" height="9" fill="#c60b1e"/></g>
-    <g transform="translate(1230,662) rotate(7)"><rect width="42" height="7" fill="#c60b1e"/><rect y="7" width="42" height="12" fill="#ffc400"/><rect y="19" width="42" height="7" fill="#c60b1e"/></g>
+  <g filter="url(#ondear)">
+    <rect x="-80" y="-60" width="1600" height="300" fill="#a30d1a"/>
+    <rect x="-80" y="235" width="1600" height="430" fill="#d9a410"/>
+    <rect x="-80" y="660" width="1600" height="300" fill="#a30d1a"/>
   </g>
-  <path d="M0,775 Q400,725 800,765 T1440,752 L1440,900 L0,900 Z" fill="#2e0409"/>
-  <path d="M0,775 Q400,725 800,765 T1440,752 L1440,900 L0,900 Z" fill="url(#publico)" opacity=".8"/>
-  <path d="M0,850 Q480,812 960,842 T1440,834 L1440,900 L0,900 Z" fill="#1e0305"/>
+  <rect x="0" y="0" width="1440" height="900" fill="url(#pliegues)"/>
+  <rect x="0" y="0" width="1440" height="900" fill="url(#vineta)"/>
 </svg>
 <div class="wrap">
   <header>
     <div class="badge" id="uiBadge">España jugará la gran final · 19 · 07 · 2026</div>
     <h1 id="uiTitulo">Tu recuerdo de <span>la final</span></h1>
-    <p class="sub" id="uiSub">Un día para contar a tus nietos. Genera <strong>gratis</strong> tu entrada conmemorativa
-    con tu nombre y el sitio desde donde la vas a vivir. Guárdala, compártela, presume.</p>
+    <p class="sub" id="uiSub">Esto no pasa todos los años. Hazte <strong>gratis</strong> tu entrada de la final
+    — tu nombre, tu foto, tu sitio — en 10 segundos y mándala al grupo antes de que la mande otro.
+    Sin registro, sin apps.</p>
   </header>
 
   <div class="grid">
@@ -234,7 +240,7 @@ const $  = id => document.getElementById(id);
 if(MODO_CAMPEONES){
   $('uiBadge').textContent   = '¡España campeona del mundo! · 19 · 07 · 2026';
   $('uiTitulo').innerHTML    = 'Tu recuerdo de <span>la gloria</span>';
-  $('uiSub').innerHTML       = 'Ha pasado. Es historia. Genera <strong>gratis</strong> tu entrada conmemorativa de la noche en que España conquistó su segunda estrella.';
+  $('uiSub').innerHTML       = 'HA PASADO DE VERDAD. Hazte <strong>gratis</strong> tu entrada de la noche en que España se hizo campeona del mundo — con tu nombre y tu foto — y mándala al grupo. Esta imagen es historia.';
   $('uiLabelLugar').textContent = '¿Desde dónde la viviste?';
   $('uiLabelPron').textContent  = 'El marcador final (opcional)';
 }
