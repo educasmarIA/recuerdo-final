@@ -134,6 +134,9 @@
       <label for="pronostico" id="uiLabelPron">Tu pronóstico (opcional)</label>
       <input type="text" id="pronostico" maxlength="14" placeholder="Ej: 2 - 1" autocomplete="off">
 
+      <label for="dedicatoria">Dedicatoria (opcional)</label>
+      <input type="text" id="dedicatoria" maxlength="60" placeholder="Ej: Para papá, que me llevó a mi primer partido" autocomplete="off">
+
       <label for="foto">Tu foto (opcional)</label>
       <div class="zona-foto" id="zonaFoto">
         <input type="file" id="foto" accept="image/*" hidden>
@@ -190,6 +193,7 @@ const RIVAL            = null;
 const MODO_CAMPEONES   = false;
 const LICENSE_ENDPOINT = 'https://educasmarsmurf.app.n8n.cloud/webhook/recuerdo-hd';
 const URL_COMPRA_HD    = 'https://educasmar.gumroad.com/l/recuerdo-final-hd';
+const CAMINO           = 'EL CAMINO · Cabo Verde 0-0 · Arabia Saudí 4-0 · Uruguay 1-0 · Austria 3-0 · Portugal 1-0 · Bélgica 2-1 · Francia 2-0';
 
 const cv = document.getElementById('lienzo');
 let ctx  = cv.getContext('2d');
@@ -247,7 +251,8 @@ function datos(){
     nombre: ($('nombre').value.trim() || 'UN AFICIONADO').toUpperCase(),
     lugar: (lugarSel === 'otro' ? ($('lugarOtro').value.trim() || 'Mi sitio favorito') : lugarSel),
     ciudad: ($('ciudad').value.trim() || 'España').toUpperCase(),
-    pronostico: $('pronostico').value.trim()
+    pronostico: $('pronostico').value.trim(),
+    dedicatoria: $('dedicatoria').value.trim()
   };
 }
 
@@ -313,6 +318,23 @@ function codigoBarras(x,y,w,h,semilla){
     if(rnd() > .35) ctx.fillRect(px, y, bw, h);
     px += bw + 3;
   }
+}
+
+function caminoVertical(TX, TY, TH){
+  const sufijo = MODO_CAMPEONES ? ' · Y EL 19 DE JULIO... CAMPEONES DEL MUNDO' : ' · 19 DE JULIO: LA GRAN FINAL';
+  const txt = CAMINO + sufijo;
+  ctx.save();
+  ctx.translate(TX+38, TY+TH/2);
+  ctx.rotate(-Math.PI/2);
+  let size = 20;
+  ctx.font = '600 ' + size + 'px Archivo';
+  while(ctx.measureText(txt).width > TH-120 && size > 12){
+    size -= 1;
+    ctx.font = '600 ' + size + 'px Archivo';
+  }
+  ctx.fillStyle = '#b3a888'; ctx.textAlign = 'center';
+  ctx.fillText(txt, 0, 0);
+  ctx.restore();
 }
 
 function fotoPolaroid(cx, cy, fw, fh, tilt){
@@ -392,21 +414,25 @@ function componer(conMarca){
 
     fotoPolaroid(540, TY+860, 620, 480, -0.035);
 
-    textoCentrado('ESTA ENTRADA CERTIFICA QUE', TY+1160, '600 26px Archivo', '#6b6250');
-    textoCentrado(d.nombre, TY+1232, '900 60px "Archivo Black"', '#1a1a1a', TW-140);
-    textoCentrado(vivio + ' ' + d.lugar.toUpperCase() + ' · ' + d.ciudad, TY+1290, '700 30px Archivo', '#8f0815', TW-140);
-    const lineaDatos = d.pronostico ? (etiquetaPron + d.pronostico + '  ·  ' + numEntrada) : numEntrada;
-    textoCentrado(lineaDatos, TY+1338, '600 26px Archivo', '#6b6250', TW-140);
+    textoCentrado('ESTA ENTRADA CERTIFICA QUE', TY+1150, '600 26px Archivo', '#6b6250');
+    textoCentrado(d.nombre, TY+1216, '900 60px "Archivo Black"', '#1a1a1a', TW-140);
+    textoCentrado(vivio + ' ' + d.lugar.toUpperCase() + ' · ' + d.ciudad, TY+1272, '700 30px Archivo', '#8f0815', TW-140);
+    if(d.dedicatoria){
+      textoCentrado('«' + d.dedicatoria + '»', TY+1318, 'italic 600 28px Archivo', '#6b6250', TW-160);
+    }
 
-    const filaY = TY+1400;
+    const filaY = TY+1372;
     ctx.textAlign='center'; ctx.fillStyle='#6b6250'; ctx.font='600 22px Archivo';
     ctx.fillText('SECCIÓN', TX+190, filaY);
     ctx.fillText('FILA', TX+470, filaY);
     ctx.fillText('ASIENTO', TX+750, filaY);
     ctx.fillStyle='#1a1a1a'; ctx.font='900 38px "Archivo Black"';
-    ctx.fillText(MODO_CAMPEONES ? 'GLORIA' : 'CORAZÓN', TX+190, filaY+46);
-    ctx.fillText('2026', TX+470, filaY+46);
-    ctx.fillText(MODO_CAMPEONES ? 'ETERNO' : 'VIP', TX+750, filaY+46);
+    ctx.fillText(MODO_CAMPEONES ? 'GLORIA' : 'CORAZÓN', TX+190, filaY+44);
+    ctx.fillText('2026', TX+470, filaY+44);
+    ctx.fillText(MODO_CAMPEONES ? 'ETERNO' : 'VIP', TX+750, filaY+44);
+
+    const lineaDatos = d.pronostico ? (etiquetaPron + d.pronostico + '  ·  ' + numEntrada) : numEntrada;
+    textoCentrado(lineaDatos, TY+1462, '600 22px Archivo', '#6b6250', TW-140);
   } else {
     /* --- maquetación SIN foto: la original --- */
     textoCentrado('ESPAÑA', TY+500, '900 130px "Archivo Black"', '#c60b1e', TW-120);
@@ -424,7 +450,10 @@ function componer(conMarca){
     textoCentrado(d.ciudad, TY+1034, '700 38px Archivo', '#1a1a1a', TW-140);
 
     if(d.pronostico){
-      textoCentrado(etiquetaPron + d.pronostico, TY+1110, '700 34px Archivo', '#6b6250', TW-140);
+      textoCentrado(etiquetaPron + d.pronostico, TY+1104, '700 32px Archivo', '#6b6250', TW-140);
+    }
+    if(d.dedicatoria){
+      textoCentrado('«' + d.dedicatoria + '»', TY+1148, 'italic 600 28px Archivo', '#6b6250', TW-160);
     }
 
     const filaY = TY+1180;
@@ -442,6 +471,7 @@ function componer(conMarca){
   }
 
   bandera(TX+40, TY+TH-72, TW-80, 26);
+  caminoVertical(TX, TY, TH);
 
   if(conMarca){
     ctx.save();
