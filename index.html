@@ -1099,6 +1099,11 @@ $('descargar').addEventListener('click', () => {
 
 $('compartir').addEventListener('click', async () => {
   dibujar();
+  try{ await navigator.clipboard.writeText('https://' + URL_WEB + '/'); }catch(e){}
+  const btn = $('compartir');
+  const original = btn.textContent;
+  btn.textContent = '✅ Enlace copiado';
+  setTimeout(() => { btn.textContent = original; }, 2600);
   cv.toBlob(async blob => {
     const file = new File([blob],'mi-recuerdo-de-la-final-2026.png',{type:'image/png'});
     if(navigator.canShare && navigator.canShare({files:[file]})){
