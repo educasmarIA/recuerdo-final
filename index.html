@@ -130,6 +130,7 @@
     box-shadow:0 22px 60px rgba(0,0,0,.55);
     background:#111;
   }
+  canvas.apaisado{max-width:560px}
   .acciones{display:flex;gap:10px;max-width:380px;margin:14px auto 0}
   .acciones .btn{margin-top:0}
   .fila3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:2px}
@@ -245,6 +246,12 @@
       </div>
       <p class="hint">🔒 Tu foto no se sube a ningún sitio: todo ocurre en tu propio móvil u ordenador.</p>
 
+      <label for="formatoSel">Formato de la entrada</label>
+      <select id="formatoSel">
+        <option value="vertical">Vertical — para stories y móvil</option>
+        <option value="horizontal">Horizontal — entrada clásica con talón</option>
+      </select>
+
       <label for="fondoSel">Fondo de la imagen</label>
       <select id="fondoSel">
         <option value="bandera">Bandera de España</option>
@@ -329,6 +336,7 @@
   </footer>
 </div>
 
+<script src="qrcode.min.js"></script>
 <script>
 /* ================== CONFIGURACIÓN ==================
    URL_WEB          → marca de agua y pie (actualizar con la URL definitiva al desplegar)
@@ -396,6 +404,16 @@ let bgImg = null;
 
 $('fondoSel').addEventListener('change', e => {
   if(e.target.value === 'foto' && !bgImg) $('fondoFile').click();
+  dibujar();
+});
+
+function esHorizontal(){ return $('formatoSel').value === 'horizontal'; }
+
+$('formatoSel').addEventListener('change', () => {
+  const h = esHorizontal();
+  cv.width = h ? 1920 : 1080;
+  cv.height = h ? 1080 : 1920;
+  cv.classList.toggle('apaisado', h);
   dibujar();
 });
 
@@ -478,14 +496,14 @@ function datos(){
   };
 }
 
-/* ---------- primitivas de dibujo ---------- */
-function confeti(cantidad){
+/* ---------- primitivas de dibujo (parametrizadas para vertical y horizontal) ---------- */
+function confeti(W, H, cantidad){
   const colores = ['#ffc400','#ffffff','#e63946','#ffd966'];
   let seed = 42;
   const rnd = () => (seed = (seed*9301+49297)%233280) / 233280;
   for(let i=0;i<cantidad;i++){
     ctx.save();
-    ctx.translate(rnd()*1080, rnd()*1920);
+    ctx.translate(rnd()*W, rnd()*H);
     ctx.rotate(rnd()*Math.PI);
     ctx.globalAlpha = .12 + rnd()*.25;
     ctx.fillStyle = colores[Math.floor(rnd()*colores.length)];
@@ -495,79 +513,93 @@ function confeti(cantidad){
   ctx.globalAlpha = 1;
 }
 
-function vineta(){
-  const v = ctx.createRadialGradient(540,760,300,540,960,1250);
+function vineta(W, H){
+  const v = ctx.createRadialGradient(W/2, H*0.4, Math.min(W,H)*0.28, W/2, H/2, Math.max(W,H)*0.65);
   v.addColorStop(0,'rgba(10,1,2,0)');
   v.addColorStop(1,'rgba(10,1,2,.55)');
-  ctx.fillStyle = v; ctx.fillRect(0,0,1080,1920);
+  ctx.fillStyle = v; ctx.fillRect(0,0,W,H);
 }
 
-function fondoFiesta(){
-  const g = ctx.createLinearGradient(0,0,0,1920);
+function fondoFiesta(W, H){
+  const g = ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0,'#7d0a16'); g.addColorStop(.55,'#4a060d'); g.addColorStop(1,'#1f0305');
-  ctx.fillStyle = g; ctx.fillRect(0,0,1080,1920);
-  confeti(130);
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  confeti(W, H, 130);
 }
 
-function fondoBandera(){
-  const g = ctx.createLinearGradient(0,0,0,1920);
+function fondoBandera(W, H){
+  const g = ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0,'#6e0812'); g.addColorStop(1,'#43050b');
-  ctx.fillStyle = g; ctx.fillRect(0,0,1080,1920);
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
   // banda dorada central con bordes ondulados (bandera al viento)
+  const y1 = H*0.323, y2 = H*0.677;
   ctx.beginPath();
-  ctx.moveTo(0, 620);
-  for(let x=0; x<=1080; x+=30) ctx.lineTo(x, 620 + Math.sin(x/150)*28);
-  for(let x=1080; x>=0; x-=30) ctx.lineTo(x, 1300 + Math.sin(x/150+1.4)*28);
+  ctx.moveTo(0, y1);
+  for(let x=0; x<=W; x+=30) ctx.lineTo(x, y1 + Math.sin(x/150)*28);
+  for(let x=W; x>=0; x-=30) ctx.lineTo(x, y2 + Math.sin(x/150+1.4)*28);
   ctx.closePath();
-  const g2 = ctx.createLinearGradient(0,620,0,1300);
+  const g2 = ctx.createLinearGradient(0,y1,0,y2);
   g2.addColorStop(0,'#a97f0b'); g2.addColorStop(.5,'#bd8d0e'); g2.addColorStop(1,'#8f6c09');
   ctx.fillStyle = g2; ctx.fill();
   // pliegues de tela en diagonal
-  const pl = ctx.createLinearGradient(0,0,1080,160);
+  const pl = ctx.createLinearGradient(0,0,W,H*0.083);
   pl.addColorStop(0,'rgba(0,0,0,.26)');
   pl.addColorStop(.18,'rgba(255,255,255,.05)');
   pl.addColorStop(.36,'rgba(0,0,0,.22)');
   pl.addColorStop(.55,'rgba(255,255,255,.06)');
   pl.addColorStop(.74,'rgba(0,0,0,.26)');
   pl.addColorStop(1,'rgba(0,0,0,.32)');
-  ctx.fillStyle = pl; ctx.fillRect(0,0,1080,1920);
-  confeti(60);
-  vineta();
+  ctx.fillStyle = pl; ctx.fillRect(0,0,W,H);
+  confeti(W, H, 60);
+  vineta(W, H);
 }
 
-function fondoCampo(){
-  const g = ctx.createLinearGradient(0,0,0,1920);
+function fondoCampo(W, H){
+  const g = ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0,'#155024'); g.addColorStop(1,'#0a2b12');
-  ctx.fillStyle = g; ctx.fillRect(0,0,1080,1920);
-  // franjas de siega
-  for(let y=0; y<1920; y+=160){
-    if((y/160)%2 === 0){ ctx.fillStyle = 'rgba(255,255,255,.05)'; ctx.fillRect(0,y,1080,160); }
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  // franjas de siega (perpendiculares al lado largo)
+  const paso = Math.max(W,H)/12;
+  for(let p=0; p<Math.max(W,H); p+=paso){
+    if(Math.round(p/paso)%2 === 0){
+      ctx.fillStyle = 'rgba(255,255,255,.05)';
+      if(H >= W) ctx.fillRect(0,p,W,paso); else ctx.fillRect(p,0,paso,H);
+    }
   }
-  // líneas del campo (vista cenital) — pensadas para asomar alrededor de la entrada
+  // líneas del campo (vista cenital) — asoman alrededor de la entrada
   ctx.strokeStyle = 'rgba(255,255,255,.42)'; ctx.lineWidth = 6;
-  ctx.strokeRect(36,36,1008,1848);
-  ctx.beginPath(); ctx.moveTo(36,960); ctx.lineTo(1044,960); ctx.stroke();
-  ctx.beginPath(); ctx.arc(540,960,180,0,7); ctx.stroke();
-  ctx.strokeRect(280,36,520,280);
-  ctx.strokeRect(280,1604,520,280);
-  ctx.strokeRect(400,36,280,120);
-  ctx.strokeRect(400,1764,280,120);
+  ctx.strokeRect(36,36,W-72,H-72);
+  if(H >= W){
+    ctx.beginPath(); ctx.moveTo(36,H/2); ctx.lineTo(W-36,H/2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(W/2,H/2,180,0,7); ctx.stroke();
+    ctx.strokeRect(W/2-260,36,520,280);
+    ctx.strokeRect(W/2-260,H-316,520,280);
+    ctx.strokeRect(W/2-140,36,280,120);
+    ctx.strokeRect(W/2-140,H-156,280,120);
+  } else {
+    ctx.beginPath(); ctx.moveTo(W/2,36); ctx.lineTo(W/2,H-36); ctx.stroke();
+    ctx.beginPath(); ctx.arc(W/2,H/2,180,0,7); ctx.stroke();
+    ctx.strokeRect(36,H/2-260,280,520);
+    ctx.strokeRect(W-316,H/2-260,280,520);
+    ctx.strokeRect(36,H/2-140,120,280);
+    ctx.strokeRect(W-156,H/2-140,120,280);
+  }
   const esquina = (x,y,a0,a1) => { ctx.beginPath(); ctx.arc(x,y,46,a0,a1); ctx.stroke(); };
-  esquina(36,36,0,Math.PI/2); esquina(1044,36,Math.PI/2,Math.PI);
-  esquina(1044,1884,Math.PI,Math.PI*1.5); esquina(36,1884,Math.PI*1.5,Math.PI*2);
-  confeti(45);
-  vineta();
+  esquina(36,36,0,Math.PI/2); esquina(W-36,36,Math.PI/2,Math.PI);
+  esquina(W-36,H-36,Math.PI,Math.PI*1.5); esquina(36,H-36,Math.PI*1.5,Math.PI*2);
+  confeti(W, H, 45);
+  vineta(W, H);
 }
 
-function fondoMarea(){
-  const g = ctx.createLinearGradient(0,0,0,1920);
+function fondoMarea(W, H){
+  const g = ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0,'#5c0810'); g.addColorStop(1,'#26040a');
-  ctx.fillStyle = g; ctx.fillRect(0,0,1080,1920);
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
   // filas de afición (cabezas + camisetas rojas) arriba y abajo
   let seed = 11;
   const rnd = () => (seed = (seed*9301+49297)%233280) / 233280;
   const fila = (y, escala) => {
-    for(let x = -20; x < 1100; x += 34*escala){
+    for(let x = -20; x < W+20; x += 34*escala){
       const dx = x + rnd()*14, dy = y + rnd()*10;
       ctx.fillStyle = rnd() > .82 ? '#ffc400' : '#a01020';      // alguna camiseta amarilla
       ctx.fillRect(dx-13*escala, dy+8*escala, 26*escala, 30*escala);
@@ -576,49 +608,50 @@ function fondoMarea(){
     }
   };
   for(let i = 0; i < 4; i++) fila(28 + i*36, 0.9);
-  for(let i = 0; i < 5; i++) fila(1742 + i*40, 1.05);
-  confeti(50);
-  vineta();
+  for(let i = 0; i < 5; i++) fila(H-178 + i*40, 1.05);
+  confeti(W, H, 50);
+  vineta(W, H);
 }
 
-function fondoNoche(){
-  const g = ctx.createLinearGradient(0,0,0,1920);
+function fondoNoche(W, H){
+  const g = ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0,'#0c1230'); g.addColorStop(1,'#04060f');
-  ctx.fillStyle = g; ctx.fillRect(0,0,1080,1920);
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
   let seed = 7;
   const rnd = () => (seed = (seed*9301+49297)%233280) / 233280;
   for(let i = 0; i < 170; i++){
     ctx.globalAlpha = .25 + rnd()*.65;
     ctx.fillStyle = '#ffffff';
-    ctx.beginPath(); ctx.arc(rnd()*1080, rnd()*1920, .8 + rnd()*2, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(rnd()*W, rnd()*H, .8 + rnd()*2, 0, 7); ctx.fill();
   }
   ctx.globalAlpha = 1;
-  const luna = ctx.createRadialGradient(880,170,20,880,170,150);
+  const lx = W-200, ly = 170;
+  const luna = ctx.createRadialGradient(lx,ly,20,lx,ly,150);
   luna.addColorStop(0,'rgba(243,233,200,.9)');
   luna.addColorStop(.35,'rgba(243,233,200,.25)');
   luna.addColorStop(1,'rgba(243,233,200,0)');
-  ctx.fillStyle = luna; ctx.beginPath(); ctx.arc(880,170,150,0,7); ctx.fill();
-  confeti(30);
-  vineta();
+  ctx.fillStyle = luna; ctx.beginPath(); ctx.arc(lx,ly,150,0,7); ctx.fill();
+  confeti(W, H, 30);
+  vineta(W, H);
 }
 
-function fondoFoto(){
-  if(!bgImg){ fondoFiesta(); return; }
-  const s = Math.max(1080/bgImg.width, 1920/bgImg.height);
+function fondoFoto(W, H){
+  if(!bgImg){ fondoFiesta(W, H); return; }
+  const s = Math.max(W/bgImg.width, H/bgImg.height);
   const w = bgImg.width*s, h = bgImg.height*s;
-  ctx.drawImage(bgImg, (1080-w)/2, (1920-h)/2, w, h);
-  ctx.fillStyle = 'rgba(12,2,4,.45)'; ctx.fillRect(0,0,1080,1920);
-  vineta();
+  ctx.drawImage(bgImg, (W-w)/2, (H-h)/2, w, h);
+  ctx.fillStyle = 'rgba(12,2,4,.45)'; ctx.fillRect(0,0,W,H);
+  vineta(W, H);
 }
 
-function fondo(){
+function fondo(W, H){
   const sel = $('fondoSel') ? $('fondoSel').value : 'bandera';
-  if(sel === 'campo') fondoCampo();
-  else if(sel === 'marea') fondoMarea();
-  else if(sel === 'noche') fondoNoche();
-  else if(sel === 'fiesta') fondoFiesta();
-  else if(sel === 'foto') fondoFoto();
-  else fondoBandera();
+  if(sel === 'campo') fondoCampo(W, H);
+  else if(sel === 'marea') fondoMarea(W, H);
+  else if(sel === 'noche') fondoNoche(W, H);
+  else if(sel === 'fiesta') fondoFiesta(W, H);
+  else if(sel === 'foto') fondoFoto(W, H);
+  else fondoBandera(W, H);
 }
 
 function tarjeta(x,y,w,h,r){
@@ -765,9 +798,51 @@ function textoBandera(txt, y, px, franjas, maxW){
 }
 
 /* ---------- composición ---------- */
+function metaEntrada(d){
+  const numEntrada = 'Nº ' + (100000 + (d.nombre.length*d.ciudad.length*777)%899999);
+  const difPitido = PITIDO - Date.now();
+  let sello;
+  if(MODO_CAMPEONES) sello = 'LA NOCHE DE LA SEGUNDA ESTRELLA';
+  else if(difPitido > 0){
+    const dd = Math.floor(difPitido/86400000);
+    const hh = Math.floor(difPitido%86400000/3600000);
+    const mm = Math.floor(difPitido%3600000/60000);
+    sello = 'GENERADA A ' + (dd>0 ? (dd + (dd===1?' DÍA, ':' DÍAS, ')) : '') + hh + ' H Y ' + mm + ' MIN DEL PITIDO';
+  }
+  else if(difPitido > -3*3600000) sello = 'GENERADA CON LA FINAL EN JUEGO';
+  else sello = 'GENERADA DESPUÉS DE LA GRAN FINAL';
+  return {
+    numEntrada, sello,
+    etiquetaPron: MODO_CAMPEONES ? 'MARCADOR FINAL: ' : 'PORRA: ',
+    vivio: MODO_CAMPEONES ? 'VIVIÓ LA NOCHE HISTÓRICA DESDE' : 'VIVIÓ LA FINAL DESDE',
+    lineaRival: MODO_CAMPEONES ? null : (RIVAL ? ('CONTRA ' + RIVAL) : 'A POR LA SEGUNDA ESTRELLA')
+  };
+}
+
+function dibujarQR(x, y, tam, texto){
+  if(typeof qrcode !== 'function') return;
+  const qr = qrcode(0, 'M');
+  qr.addData(texto);
+  qr.make();
+  const n = qr.getModuleCount();
+  const pad = Math.round(tam*0.1);
+  ctx.fillStyle = '#ffffff';
+  if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(x-pad, y-pad, tam+2*pad, tam+2*pad, 10); ctx.fill(); }
+  else ctx.fillRect(x-pad, y-pad, tam+2*pad, tam+2*pad);
+  const cs = tam/n;
+  ctx.fillStyle = '#1a1a1a';
+  for(let r=0;r<n;r++) for(let c=0;c<n;c++) if(qr.isDark(r,c)) ctx.fillRect(x+c*cs, y+r*cs, Math.ceil(cs), Math.ceil(cs));
+}
+
 function componer(conMarca){
   const d = datos();
-  fondo();
+  const meta = metaEntrada(d);
+  if($('formatoSel') && $('formatoSel').value === 'horizontal'){
+    componerH(d, meta, conMarca);
+    return;
+  }
+  const {numEntrada, sello, etiquetaPron, vivio, lineaRival} = meta;
+  fondo(1080, 1920);
 
   const TX=70, TY=150, TW=940, TH=1560;
   ctx.save();
@@ -796,22 +871,6 @@ function componer(conMarca){
   ctx.strokeStyle='#d9cdb0'; ctx.setLineDash([12,10]); ctx.lineWidth=3;
   ctx.beginPath(); ctx.moveTo(TX+60,TY+378); ctx.lineTo(TX+TW-60,TY+378); ctx.stroke();
   ctx.setLineDash([]);
-
-  const numEntrada = 'Nº ' + (100000 + (d.nombre.length*d.ciudad.length*777)%899999);
-  const difPitido = PITIDO - Date.now();
-  let sello;
-  if(MODO_CAMPEONES) sello = 'LA NOCHE DE LA SEGUNDA ESTRELLA';
-  else if(difPitido > 0){
-    const dd = Math.floor(difPitido/86400000);
-    const hh = Math.floor(difPitido%86400000/3600000);
-    const mm = Math.floor(difPitido%3600000/60000);
-    sello = 'GENERADA A ' + (dd>0 ? (dd + (dd===1?' DÍA, ':' DÍAS, ')) : '') + hh + ' H Y ' + mm + ' MIN DEL PITIDO';
-  }
-  else if(difPitido > -3*3600000) sello = 'GENERADA CON LA FINAL EN JUEGO';
-  else sello = 'GENERADA DESPUÉS DE LA GRAN FINAL';
-  const etiquetaPron = MODO_CAMPEONES ? 'MARCADOR FINAL: ' : 'PORRA: ';
-  const vivio = MODO_CAMPEONES ? 'VIVIÓ LA NOCHE HISTÓRICA DESDE' : 'VIVIÓ LA FINAL DESDE';
-  const lineaRival = MODO_CAMPEONES ? null : (RIVAL ? ('CONTRA ' + RIVAL) : 'A POR LA SEGUNDA ESTRELLA');
 
   if(fotoImg){
     /* --- maquetación CON foto: polaroid protagonista --- */
@@ -892,7 +951,126 @@ function componer(conMarca){
     ctx.restore();
   }
 
-  textoCentrado('Genera la tuya gratis · ' + URL_WEB, 1855, '600 30px Archivo', 'rgba(253,246,227,.75)', 1020);
+  // pie: QR escaneable + invitación
+  dibujarQR(84, 1758, 104, 'https://' + URL_WEB + '/');
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(253,246,227,.9)'; ctx.font = '700 36px Archivo';
+  ctx.fillText('Genera la tuya gratis', 232, 1798);
+  ctx.fillStyle = '#ffc400'; ctx.font = '600 28px Archivo';
+  ctx.fillText(URL_WEB, 232, 1842);
+}
+
+function componerH(d, meta, conMarca){
+  const {numEntrada, sello, etiquetaPron, vivio, lineaRival} = meta;
+  const W=1920, H=1080;
+  fondo(W, H);
+
+  const TX=60, TY=88, TW=1800, TH=904;
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,.5)'; ctx.shadowBlur=40; ctx.shadowOffsetY=16;
+  tarjeta(TX,TY,TW,TH,36);
+  ctx.fillStyle='#fdf6e3'; ctx.fill();
+  ctx.restore();
+
+  // troquel superior e inferior
+  ctx.fillStyle='#4a060d';
+  for(let x=TX+44; x<TX+TW-24; x+=64){
+    ctx.beginPath(); ctx.arc(x,TY,10,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(x,TY+TH,10,0,7); ctx.fill();
+  }
+
+  texturaPlantilla(TX, TY, TW, TH);
+
+  bandera(TX+40, TY+28, TW-80, 20);
+  bandera(TX+40, TY+TH-48, TW-80, 20);
+
+  // perforación del talón
+  const stubW = 400, stubX = TX+TW-stubW;
+  ctx.strokeStyle='#d9cdb0'; ctx.setLineDash([16,13]); ctx.lineWidth=4;
+  ctx.beginPath(); ctx.moveTo(stubX, TY+66); ctx.lineTo(stubX, TY+TH-66); ctx.stroke();
+  ctx.setLineDash([]);
+
+  /* ---- zona principal (izquierda) ---- */
+  const cxL = TX + (stubX - TX)/2;
+  const zonaW = stubX - TX - 90;
+  ctx.save();
+  ctx.translate(cxL - 540, 0);
+  textoCentrado('ENTRADA CONMEMORATIVA', TY+98, '700 27px Archivo', '#8f0815');
+  const tituloGrande = MODO_CAMPEONES ? 'CAMPEONES' : 'LA GRAN FINAL';
+  textoCentrado(tituloGrande, TY+176, '900 74px "Archivo Black"', '#1a1a1a', zonaW);
+  const subTitulo = MODO_CAMPEONES ? 'DEL MUNDO · FÚTBOL · 19 · 07 · 2026' : 'DEL FÚTBOL MUNDIAL · 19 · 07 · 2026 · 21:00';
+  textoCentrado(subTitulo, TY+222, '700 28px Archivo', '#8f0815', zonaW);
+  textoCentrado('ESTADIO METLIFE · NUEVA JERSEY (EE. UU.)', TY+258, '600 22px Archivo', '#6b6250', zonaW);
+
+  if(MODO_CAMPEONES){
+    textoCentrado('ESPAÑA', TY+368, '900 88px "Archivo Black"', '#c60b1e', zonaW);
+    estrellas(540, TY+412);
+  } else {
+    textoBandera('ESPAÑA', TY+362, 82, BANDERA_ES, zonaW);
+    textoCentrado('C O N T R A', TY+398, '800 19px Archivo', '#8f0815', zonaW);
+    textoBandera('ARGENTINA', TY+452, 50, BANDERA_AR, zonaW);
+  }
+  textoCentrado('SELECCIONADOR: LUIS DE LA FUENTE', TY+488, '600 18px Archivo', '#6b6250', zonaW);
+
+  ctx.strokeStyle='#d9cdb0'; ctx.setLineDash([12,10]); ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(540-zonaW/2, TY+516); ctx.lineTo(540+zonaW/2, TY+516); ctx.stroke();
+  ctx.setLineDash([]);
+
+  textoCentrado('ESTA ENTRADA CERTIFICA QUE', TY+556, '600 22px Archivo', '#6b6250');
+  textoCentrado(d.nombre, TY+614, '900 50px "Archivo Black"', '#1a1a1a', zonaW);
+  textoCentrado(vivio + ' ' + d.lugar.toUpperCase() + ' · ' + d.ciudad, TY+656, '700 25px Archivo', '#8f0815', zonaW);
+  if(d.dedicatoria){
+    textoCentrado('«' + d.dedicatoria + '»', TY+694, 'italic 600 23px Archivo', '#6b6250', zonaW-40);
+  }
+  const lineaDatos = d.pronostico ? (etiquetaPron + d.pronostico + '  ·  ' + numEntrada) : numEntrada;
+  textoCentrado(lineaDatos + '  ·  ' + sello, TY+732, '600 20px Archivo', '#6b6250', zonaW);
+
+  const tituloCam = MODO_CAMPEONES ? 'EL CAMINO DE LOS CAMPEONES' : 'EL CAMINO A LA FINAL';
+  const l2cam = MODO_CAMPEONES ? (CAMINO_L2 + ' · FINAL: ¡CAMPEONES!') : CAMINO_L2;
+  textoCentrado(tituloCam, TY+778, '700 23px Archivo', '#8f0815', zonaW);
+  textoCentrado(CAMINO_L1, TY+812, '600 21px Archivo', '#6b6250', zonaW);
+  textoCentrado(l2cam, TY+844, '600 21px Archivo', '#6b6250', zonaW);
+  ctx.restore();
+
+  /* ---- talón (derecha) ---- */
+  const cxS = stubX + stubW/2;
+  ctx.save();
+  ctx.translate(cxS - 540, 0);
+  if(fotoImg){
+    fotoPolaroid(540, TY+188, 300, 244, 0.035);
+  } else {
+    bandera(540-80, TY+96, 160, 96);
+    textoCentrado('ESPAÑA 2026', TY+238, '900 30px "Archivo Black"', '#c60b1e', stubW-80);
+  }
+  ctx.fillStyle='#6b6250'; ctx.font='600 19px Archivo'; ctx.textAlign='center';
+  ctx.fillText('SECCIÓN', 540, TY+360);
+  textoCol(d.seccion, 540, TY+396, 32, stubW-90);
+  ctx.fillStyle='#6b6250'; ctx.font='600 19px Archivo';
+  ctx.fillText('FILA', 540, TY+446);
+  textoCol(d.fila, 540, TY+482, 32, stubW-90);
+  ctx.fillStyle='#6b6250'; ctx.font='600 19px Archivo';
+  ctx.fillText('ASIENTO', 540, TY+532);
+  textoCol(d.asiento, 540, TY+568, 32, stubW-90);
+
+  dibujarQR(540-70, TY+608, 140, 'https://' + URL_WEB + '/');
+  textoCentrado('ESCANEA Y HAZTE LA TUYA', TY+788, '700 17px Archivo', '#8f0815', stubW-70);
+  textoCentrado(numEntrada, TY+820, '600 20px Archivo', '#6b6250', stubW-70);
+  ctx.restore();
+
+  // marca de agua
+  if(conMarca){
+    ctx.save();
+    ctx.translate(cxL, 620); ctx.rotate(-.28);
+    ctx.globalAlpha=.13; ctx.font='900 110px "Archivo Black"'; ctx.fillStyle='#1a1a1a'; ctx.textAlign='center';
+    ctx.fillText(MARCA_AGUA, 0, 0);
+    ctx.restore();
+  }
+
+  // pie
+  ctx.save();
+  ctx.translate(W/2 - 540, 0);
+  textoCentrado('Genera la tuya gratis · ' + URL_WEB, H-30, '600 26px Archivo', 'rgba(253,246,227,.85)', W-160);
+  ctx.restore();
 }
 
 function render(canvas, escala, conMarca){
@@ -963,7 +1141,8 @@ $('desbloquear').addEventListener('click', async () => {
 
 $('descargarHD').addEventListener('click', () => {
   const c = document.createElement('canvas');
-  c.width = 2160; c.height = 3840;
+  const h = esHorizontal();
+  c.width = h ? 3840 : 2160; c.height = h ? 2160 : 3840;
   render(c, 2, false);
   const a = document.createElement('a');
   a.download = 'recuerdo-de-la-final-2026-HD.png';
